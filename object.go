@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 func RunObjectTest() {
@@ -32,8 +33,8 @@ func RunObjectTest() {
 		Key:    aws.String("test.txt"),
 	})
 	eval("GetObject", err)
-	buf, err := io.ReadAll(GetObjectOutput.Body)
-	assert("GetObject body", string(buf) == content, err)
+	GetObjectBuf, err := io.ReadAll(GetObjectOutput.Body)
+	assert("GetObject body", string(GetObjectBuf) == content, err)
 
 	_, err = client.HeadObject(context.TODO(), &s3.HeadObjectInput{
 		Bucket: aws.String("test"),
@@ -41,17 +42,41 @@ func RunObjectTest() {
 	})
 	eval("HeadObject", err)
 
+	_, err = client.CopyObject(context.TODO(), &s3.CopyObjectInput{
+		Bucket:     aws.String("test"),
+		Key:        aws.String("test2.txt"),
+		CopySource: aws.String("/test/test.txt"),
+	})
+	eval("CopyObject", err)
+
+	CopiedObject, err := client.GetObject(context.TODO(), &s3.GetObjectInput{
+		Bucket: aws.String("test"),
+		Key:    aws.String("test2.txt"),
+	})
+	eval("CopiedObject", err)
+	CopiedObjectBuf, err := io.ReadAll(CopiedObject.Body)
+	assert("CopiedObject body", string(CopiedObjectBuf) == content, err)
+
 	_, err = client.ListObjectVersions(context.TODO(), &s3.ListObjectVersionsInput{
 		Bucket: aws.String("test"),
 		Prefix: aws.String("test.txt"),
 	})
 	eval("ListObjectVersions", err)
 
-	_, err = client.DeleteObject(context.TODO(), &s3.DeleteObjectInput{
+	_, err = client.DeleteObjects(context.TODO(), &s3.DeleteObjectsInput{
 		Bucket: aws.String("test"),
-		Key:    aws.String("test.txt"),
+		Delete: &types.Delete{
+			Objects: []types.ObjectIdentifier{
+				{
+					Key: aws.String("test.txt"),
+				},
+				{
+					Key: aws.String("test2.txt"),
+				},
+			},
+		},
 	})
-	eval("DeleteObject", err)
+	eval("DeleteObjects", err)
 
 	teardown()
 }
