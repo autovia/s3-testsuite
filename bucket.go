@@ -30,6 +30,4 @@ func RunBucketTest() {
 		Bucket: aws.String("test"),
 	})
 	eval("DeleteBucket", err)
-
-	stats()
 }

@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log"
 
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -9,7 +11,8 @@ import (
 )
 
 var client *s3.Client
-var count int
+var cases int
+var errmap map[string]error
 
 func main() {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
@@ -20,32 +23,45 @@ func main() {
 		o.UsePathStyle = true
 	})
 
+	errmap = map[string]error{}
+
 	RunBucketTest()
 	RunObjectTest()
+
+	stats()
 }
 
 func assert(test string, b bool, err error) {
 	if err != nil {
-		log.Println(test, err)
+		fmt.Print("E")
+		errmap[test] = err
 	} else {
 		if b {
-			log.Println(test, "OK")
+			fmt.Print(".")
 		} else {
-			log.Println(test, "ERR")
+			fmt.Print("E")
+			errmap[test] = errors.New("assert not valid")
 		}
 	}
-	count += 1
+	cases += 1
 }
 
 func eval(test string, err error) {
 	if err != nil {
-		log.Println(test, err)
+		fmt.Print("E")
+		errmap[test] = err
 	} else {
-		log.Println(test, "OK")
+		fmt.Print(".")
 	}
-	count += 1
+	cases += 1
 }
 
 func stats() {
-	log.Println("testcases: ", count)
+	var c int
+	for k, v := range errmap {
+		fmt.Println("\nError: ", k, v)
+		c++
+	}
+
+	fmt.Printf("\nTestcases: %v, Errors: %v\n", cases, c)
 }

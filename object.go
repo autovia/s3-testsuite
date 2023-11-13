@@ -73,6 +73,9 @@ func RunObjectTest() {
 				{
 					Key: aws.String("test2.txt"),
 				},
+				{
+					Key: aws.String("test3.txt"),
+				},
 			},
 		},
 	})
