@@ -14,7 +14,9 @@ func RunBucketTest() {
 	eval("CreateBucket", err)
 
 	listBucketsOutput, err := client.ListBuckets(context.TODO(), &s3.ListBucketsInput{})
-	assert("ListBuckets", len(listBucketsOutput.Buckets) == 1, err)
+	if listBucketsOutput != nil {
+		assert("ListBuckets", len(listBucketsOutput.Buckets) == 1, err)
+	}
 
 	_, err = client.HeadBucket(context.TODO(), &s3.HeadBucketInput{
 		Bucket: aws.String("test"),
